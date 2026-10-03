@@ -1,0 +1,55 @@
+Visual Ornament Acquisition Planning
+====================================
+Domain: Computer Vision
+Compute: A10G
+Shipd: https://shipd.ai/quests/eris/challenges/jx7fvwe7b3k1hrqp7qx10yfxxh8fdds8
+
+MÔ TẢ ĐẦY ĐỦ
+-------------
+Leaderboard
+(0)
+Your Submissions
+Visual Ornament Acquisition Planning
+Overview
+A catalog acquisition team must choose a small set of bundles whose illustrations cover as many distinct editorial roles as possible. Infer each crop's role from visual appearance despite brightness changes, Gaussian noise, sinusoidal interference, slight rotation, small offsets, scanning variation, and partial marks.
+Each job contains eight ordered bundles, with two crop identifiers per bundle. Select exactly three bundles and return every three-bundle plan that maximizes the number of distinct roles across the selected crops. The selection budget is fixed globally at three; there is no per-row budget column.
+A plan is an eight-bit mask written as two lowercase hexadecimal characters. Bits 0 through 7 correspond to the bundle order in bundles_json. Every valid mask must have exactly three set bits. For example, 07 selects bundles 0, 1, and 2, while 19 selects bundles 0, 3, and 4.
+Public files
+train.csv — 2,200 labelled acquisition jobs.
+test.csv — 600 unlabelled acquisition jobs.
+sample_submission.csv — exact submission schema with a legal example.
+crops.csv — crop IDs, image paths, and split labels.
+training_roles.csv — role labels for training crops.
+role_vocabulary.json — all eligible integer role IDs.
+crops/*.jpg — 128 × 128 RGB catalog crops.
+Input schema
+job_id — opaque unique job identifier.
+bundles_json — ordered JSON list of eight two-crop bundles.
+optimal_plans_json — training-only complete set of optimal three-bundle masks.
+Split and label boundary
+crops.csv assigns every crop to exactly one public split: train or test.
+Jobs in train.csv use only split=train crop IDs. Jobs in test.csv use only split=test crop IDs, so no crop ID crosses between the job splits.
+training_roles.csv contains role labels only for split=train crops. It contains no test-crop ID or test-crop role.
+Evaluation crop roles and optimal plans remain private. Solvers must learn visual role cues from labelled training crops and generalize them to different held-out test crops before solving each exactly-three bundle-selection job.
+The split prevents direct test-role lookup through the public supervision table. It does not claim that visually similar ornament motifs cannot occur in both splits.
+Prediction rules
+Decode the prediction as a JSON list of distinct two-character lowercase hexadecimal masks.
+Each mask must select exactly three of the eight bundles.
+Return all masks that attain the maximum distinct-role coverage.
+List order is ignored; repeated masks are invalid.
+Evaluation
+For job j, let T_j be the complete set of optimal masks and P_j the submitted set. The row score is:
+S_j = 1.25 × |P_j ∩ T_j| / (|P_j| + 0.25 × |T_j|)
+The final score is the unweighted mean over all test jobs. It ranges from 0 to 1 and is maximized. A complete exact set scores 1; an empty set is legal and scores 0.
+Why F0.5? Each invented plan would consume scarce catalog-review and acquisition capacity. A false-positive plan therefore creates a more immediate operational cost than omitting one valid alternative, so precision receives greater weight than recall. Recall still matters: withholding valid optimal plans makes the result incomplete and lowers the score. The metric rewards complete discovery while discouraging speculative enumeration.
+Submission format
+Submit one UTF-8 CSV row per test job with exactly two columns in this order: job_id, optimal_plans_json.
+An illustrative prediction contains the JSON mask list ["07","19"]. Both example masks select exactly three bundles. Use the IDs in test.csv; example identifiers are not evaluated.
+Include every test ID exactly once. Missing, duplicate, or unknown IDs, incorrect columns, invalid JSON, or masks that do not select exactly three bundles invalidate the submission.
+Restrictions
+No pretrained weights, embeddings, external labelled data, internet access, external lookup, or hidden labels.
+Do not manually identify or memorize individual images.
+Do not use parameters learned before the timed session.
+Train all learned parameters from random initialization using public files only.
+Execution constraints
+Use one NVIDIA A10G GPU in a 90-minute offline session. Image preprocessing, role learning, combinatorial optimization, inference, and submission generation must all finish within the session.
